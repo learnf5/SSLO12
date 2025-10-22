@@ -1,0 +1,17 @@
+student@k3s:~$ docker container ls
+CONTAINER ID   IMAGE                                  COMMAND                  CREATED      STATUS     PORTS                                           NAMES
+ed0ab427809c   service-proxy-transparent              "/sbin/entrypoint.sh"    3 days ago   Up 3 days                                                  service-proxy-transparent
+60ec21d4b281   service-layer3                         "/entrypoint.sh"         3 days ago   Up 3 days                                                  service-layer3
+06a5f51b25f9   bkimminich/juice-shop                  "/nodejs/bin/node /j…"   3 days ago   Up 3 days                                                  utility-juiceshop
+b9f1e542e465   service-icap                           "/entrypoint.sh"         3 days ago   Up 3 days   0.0.0.0:1344->1344/tcp, [::]:1344->1344/tcp    service-icap
+fe5a95b78313   service-proxy-explicit                 "/sbin/entrypoint.sh"    3 days ago   Up 3 days   0.0.0.0:3128->3128/tcp, [::]:3128->3128/tcp    service-proxy-explicit
+393c156db818   lscr.io/linuxserver/wireshark:latest   "/init"                  3 days ago   Up 3 days   0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 
+                                                                                                        3001/tcp                                       service-tap-wireshark
+7651b8f4ceda   utility-webserver                      "nginx -g 'daemon of…"   3 days ago   Up 3 days   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp, 
+                                                                                                        0.0.0.0:9443->443/tcp, [::]:9443->443/tcp, 
+                                                                                                        0.0.0.0:9444->444/tcp, [::]:9444->444/tcp      utility-webserver
+65eceea27a24   service-tap                            "/entrypoint.sh"         3 days ago   Up 3 days                                                  service-tap
+e9befa45edb8   pierredavidbelanger/raftman            "/usr/local/bin/raft…"   3 days ago   Up 3 days   0.0.0.0:514->514/tcp, [::]:514->514/tcp, 
+                                                                                                        0.0.0.0:5514->5514/tcp, [::]:5514->5514/tcp, 
+                                                                                                        0.0.0.0:8282->8282/tcp, [::]:8282->8282/tcp   utility-syslogview
+
