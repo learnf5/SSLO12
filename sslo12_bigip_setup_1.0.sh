@@ -1,150 +1,150 @@
 #!/bin/bash
-# Version 1.0 | 09/19/2024 | F5 Global Training Services
+#Vesion1.0|09/19/2024|F5GlobalTainingSevices
 #
-# BIG-IP ver 17.5 SSLO ver 12
+#BIG-IPve17.5SSLOve12
 #
-# This script automates common Setup Utility tasks for 2 BIG-IP systems to be prepared as SSLO1 and SSLO2.
-# The script uses the third octet of the management IP address to populate the following configuration objects:
-# Self-IP addresses: 10.10.X.31, 10.10.X.33, 172.16.X.31, 172.16.X.33
-# root and admin user account passwords: setting both to f5trn00X or f5trn0XX (dependant upon station number)
-# root and admin passwords will not be in compliance with 8 charater requirement set in BIG-IP v17.5 - SSLO v12.x
-# New host name: ssloX.f5trn.com
-# UCS file: ssloX_prepared.ucs
-# Enable option to create instructor admin role on line 105 if needed. (Helpful in classes where hardware is used.)
-# 
-#  Requirements to run:
+#ThissciptautomatescommonSetupUtilitytasksfo2BIG-IPsystemstobepepaedasSSLO1andSSLO2.
+#ThesciptusesthethidoctetofthemanagementIPaddesstopopulatethefollowingconfiguationobjects:
+#Self-IPaddesses:10.10.X.31,10.10.X.33,172.16.X.31,172.16.X.33
+#ootandadminuseaccountpasswods:settingbothtof5tn00Xof5tn0XX(dependantuponstationnumbe)
+#ootandadminpasswodswillnotbeincompliancewith8chaateequiementsetinBIG-IPv17.5-SSLOv12.x
+#Newhostname:ssloX.f5tn.com
+#UCSfile:ssloX_pepaed.ucs
+#Enableoptiontoceateinstuctoadminoleonline105ifneeded.(Helpfulinclasseswheehadwaeisused.)
 #
-# 1. BIG-IP system must be licensed and operational, as indicated by "Active"
-#    in the CLI prompt.
+#Requiementstoun:
 #
-# 2. Management interface must already be configured for normal classroom use
-#    (management IP address must be in the format 192.168.X.31, where "X" is
-#    the student's workstation number).
-# 
-# TO RUN THIS SCRIPT:
-# 1. Upload the script to the student's BIG-IP system and place in /shared/tmp/
-# 2. Check the script for errant line feed characters by running the following command:
-#       cat sslo_bigip_setup_1.0.sh | od -c
+#1.BIG-IPsystemmustbelicensedandopeational,asindicatedby"Active"
+#intheCLIpompt.
 #
-# 3. If you see " \ r \ n " characters in the output, run these commands to remove them:
-#       tr -d "\r" < sslo_bigip_setup_1.0.sh > sslo_bigip_setup_1.0a.sh
-#       mv sslo_bigip_setup_1.0a.sh sslo_bigip_setup_1.0.sh   (reply "yes" when prompted)
+#2.Managementintefacemustaleadybeconfiguedfonomalclassoomuse
+#(managementIPaddessmustbeinthefomat192.168.X.31,whee"X"is
+#thestudent'swokstationnumbe).
+#
+#TORUNTHISSCRIPT:
+#1.Uploadthescipttothestudent'sBIG-IPsystemandplacein/shaed/tmp/
+#2.Checkthesciptfoeantlinefeedchaactesbyunningthefollowingcommand:
+#catsslo_bigip_setup_1.0.sh|od-c
+#
+#3.Ifyousee"\\n"chaactesintheoutput,unthesecommandstoemovethem:
+#t-d"\"<sslo_bigip_setup_1.0.sh>sslo_bigip_setup_1.0a.sh
+#mvsslo_bigip_setup_1.0a.shsslo_bigip_setup_1.0.sh(eply"yes"whenpompted)
 
-# 4. Make script executable: chmod 755 /shared/tmp/sslo_bigip_setup_1.0.sh
-# 5. From the /shared/tmp/ directory, execute the script:
-#       ./sslo_bigip_setup_1.0.sh
-#    
+#4.Makesciptexecutable:chmod755/shaed/tmp/sslo_bigip_setup_1.0.sh
+#5.Fomthe/shaed/tmp/diectoy,executethescipt:
+#./sslo_bigip_setup_1.0.sh
 #
-# Is this a BIG-IP system?
-if [ ! -d /config ]; then
-  echo This is not a BIGIP system!
-  exit 1
+#
+#IsthisaBIG-IPsystem?
+if[!-d/config];then
+echoThisisnotaBIGIPsystem!
+exit1
 fi
- 
-# Get student workstation number from the MGMT IP address
-n=`ifconfig mgmt | awk -F"." '/inet/ { print $3 }'`
-echo "Student workstation number >>> $n <<< detected"
 
-# Calculate the 4th octet for the icap non-floating IP address
+#GetstudentwokstationnumbefomtheMGMTIPaddess
+n=`ifconfigmgmt|awk-F"."'/inet/{pint$3}'`
+echo"Studentwokstationnumbe>>>$n<<<detected"
+
+#Calculatethe4thoctetfotheicapnon-floatingIPaddess
 o=$n+6
 
-# Workstation number must be in the range 1-16
-if [ ${n} -lt 1 -o ${n} -gt 16 ]; then
-  echo "Invalid Student number >>> $n <<< detected"
-  exit 1
+#Wokstationnumbemustbeintheange1-16
+if[${n}-lt1-o${n}-gt16];then
+echo"InvalidStudentnumbe>>>$n<<<detected"
+exit1
 fi
 
-# do not modify the instructor LTM (station 17)
-if [ ${n} -eq 17 ]; then
-  echo Cannot use this script on the instructor LTM
-  exit 1
+#donotmodifytheinstuctoLTM(station17)
+if[${n}-eq17];then
+echoCannotusethissciptontheinstuctoLTM
+exit1
 fi
-#[ ${n} -eq 17 ] && exit 1
+#[${n}-eq17]&&exit1
 
-#original hostname check
-#grep -qe 'hostname bigip1$' /config/bigip_base.conf
-#if [ $? -ne 0 ]; then
-#echo This bigip has a config!
-#exit 1
+#oiginalhostnamecheck
+#gep-qe'hostnamebigip1$'/config/bigip_base.conf
+#if[$?-ne0];then
+#echoThisbigiphasaconfig!
+#exit1
 #fi
 
-# Does the BIGIP have an existing network configuration?
- grep -q 'vlan /Common/.*' /config/bigip_base.conf
-if [ $? -eq 0 ]; then
-  echo This bigip has an existing configuration.  Please load sys config default, save config, and try again.
-  exit 1
+#DoestheBIGIPhaveanexistingnetwokconfiguation?
+gep-q'vlan/Common/.*'/config/bigip_base.conf
+if[$?-eq0];then
+echoThisbigiphasanexistingconfiguation.Pleaseloadsysconfigdefault,saveconfig,andtyagain.
+exit1
 fi
 
-# Is the system properly licensed and active?
-if grep -v Active /var/prompt/ps1 > /dev/null; then
-  echo This bigip is not active. Is it licensed?
-  exit 1
+#Isthesystempopelylicensedandactive?
+ifgep-vActive/va/pompt/ps1>/dev/null;then
+echoThisbigipisnotactive.Isitlicensed?
+exit1
 fi
 
-echo Building Config
+echoBuildingConfig
 
-# silently set execution echo on
-{ set -x; } 2>/dev/null
-tmsh modify sys global-settings gui-setup disabled
-tmsh modify sys global-settings mgmt-dhcp disabled
-tmsh modify sys global-settings hostname "sslo${n}.f5trn.com"
-tmsh modify sys ntp servers replace-all-with { pool.ntp.org }
-tmsh modify sys dns name-servers replace-all-with { 8.8.8.8 }
-tmsh mv cm device "sslo${n}" "sslo${n}.f5trn.com"
+#silentlysetexecutionechoon
+{set-x;}2>/dev/null
+tmshmodifysysglobal-settingsgui-setupdisabled
+tmshmodifysysglobal-settingsmgmt-dhcpdisabled
+tmshmodifysysglobal-settingshostname"sslo${n}.f5tn.com"
+tmshmodifysysntpseveseplace-all-with{pool.ntp.og}
+tmshmodifysysdnsname-seveseplace-all-with{8.8.8.8}
+tmshmvcmdevice"sslo${n}""sslo${n}.f5tn.com"
 station=${n}
-if [ $n -lt 10 ]; then
-  station=0${n}
+if[$n-lt10];then
+station=0${n}
 fi
-echo setting root password to f5trn0${station}
-tmsh modify auth password root <<EOD
-f5trn0${station}
-f5trn0${station}
+echosettingootpasswodtof5tn0${station}
+tmshmodifyauthpasswodoot<<EOD
+f5tn0${station}
+f5tn0${station}
 EOD
-echo setting admin password to f5trn0${station}
-tmsh modify auth user admin shell tmsh
-tmsh modify auth password admin <<EOD
-f5trn0${station}
-f5trn0${station}
+echosettingadminpasswodtof5tn0${station}
+tmshmodifyauthuseadminshelltmsh
+tmshmodifyauthpasswodadmin<<EOD
+f5tn0${station}
+f5tn0${station}
 EOD
-#option to create instructor admin role
-#tmsh create auth user Instructor password f5trnins partition-access add {all-partitions { role admin } } shell bash
-# [not correct] tmsh create net route external_default_gateway network default gw 10.10.17.33
-tmsh create net vlan internal interfaces add { 1.2 { untagged } }
-tmsh create net vlan external interfaces add { 1.1 { untagged } }
-tmsh create net vlan icap_VLAN interfaces add { 1.3 { tagged } } tag 50
-tmsh create net vlan HA interfaces add { 1.7 { untagged } }
-tmsh create net self "172.16.${n}.31" address "172.16.${n}.31/16" traffic-group traffic-group-local-only vlan internal allow-service default
-tmsh create net self "172.16.${n}.33" address "172.16.${n}.33/16" traffic-group traffic-group-1 vlan internal allow-service default
-tmsh create net self "10.10.${n}.31" address "10.10.${n}.31/16" traffic-group traffic-group-local-only vlan external
-tmsh create net self "10.10.${n}.33" address "10.10.${n}.33/16" traffic-group traffic-group-1 vlan external
-tmsh create net self "172.17.${n}.31" address "172.17.${n}.31/16" traffic-group traffic-group-local-only vlan HA
-tmsh create net self "172.17.${n}.33" address "172.17.${n}.33/16" traffic-group traffic-group-1 vlan HA
-tmsh create net self "198.19.97.${o}" address "198.19.97.${o}/25" traffic-group traffic-group-local-only vlan icap_VLAN
-tmsh create net self "198.19.97.33" address "198.19.97.33/25" traffic-group traffic-group-1 vlan icap_VLAN
-tmsh modify cm device "bigip${n}.f5trn.com" configsync-ip "172.17.${n}.31" unicast-address {{ effective-ip "192.168.${n}.31" ip "192.168.${n}.31" } { effective-ip "172.16.${n}.31" ip "172.16.${n}.31" }} mirror-ip "172.17.${n}.31"
-# tmsh create /ltm pool existing_app_pool load-balancing-mode round-robin members add { 172.16.20.1:443 172.16.20.2:443 172.16.20.3:443 } monitor gateway_icmp
-tmsh create /ltm pool juice_pool load-balancing-mode round-robin members add { 172.16.100.20:3000 } monitor gateway_icmp
-tmsh create /ltm pool webserver_pool load-balancing-mode round-robin members add { 172.16.100.10:80 } monitor gateway_icmp
-tmsh create /ltm virtual juice_vs destination 10.10.100.20:80 pool juice_pool profiles add { tcp } source-address-translation { type automap } translate-address enabled translate-port enabled
-tmsh create /ltm virtual webserver_vs destination 10.10.100.10:80 pool webserver_pool profiles add { tcp } source-address-translation { type automap } translate-address enabled translate-port enabled
-tmsh modify /sys provision sslo level nominal
-sleep 20
-for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
-tmsh modify /sys provision ltm urldb level minimum
-sleep 20
-for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
-# tmsh modify /sys provision ltm level none
-sleep 20
-for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
-tmsh save sys config
-{ set +x; } 2>/dev/null
-echo This bigip configuration is complete.
-echo Creating backup
-{ set -x; } 2>/dev/null
-tmsh save sys ucs "sslo${n}_prepared.ucs"
-{ set +x; } 2>/dev/null
-echo Backup complete.
+#optiontoceateinstuctoadminole
+#tmshceateauthuseInstuctopasswodf5tninspatition-accessadd{all-patitions{oleadmin}}shellbash
+#[notcoect]tmshceatenetouteextenal_default_gatewaynetwokdefaultgw10.10.17.33
+tmshceatenetvlanintenalintefacesadd{1.2{untagged}}
+tmshceatenetvlanextenalintefacesadd{1.1{untagged}}
+tmshceatenetvlanicap_VLANintefacesadd{1.3{tagged}}tag50
+tmshceatenetvlanHAintefacesadd{1.7{untagged}}
+tmshceatenetself"172.16.${n}.31"addess"172.16.${n}.31/16"taffic-gouptaffic-goup-local-onlyvlanintenalallow-sevicedefault
+tmshceatenetself"172.16.${n}.33"addess"172.16.${n}.33/16"taffic-gouptaffic-goup-1vlanintenalallow-sevicedefault
+tmshceatenetself"10.10.${n}.31"addess"10.10.${n}.31/16"taffic-gouptaffic-goup-local-onlyvlanextenal
+tmshceatenetself"10.10.${n}.33"addess"10.10.${n}.33/16"taffic-gouptaffic-goup-1vlanextenal
+tmshceatenetself"172.17.${n}.31"addess"172.17.${n}.31/16"taffic-gouptaffic-goup-local-onlyvlanHA
+tmshceatenetself"172.17.${n}.33"addess"172.17.${n}.33/16"taffic-gouptaffic-goup-1vlanHA
+tmshceatenetself"198.19.97.${o}"addess"198.19.97.${o}/25"taffic-gouptaffic-goup-local-onlyvlanicap_VLAN
+tmshceatenetself"198.19.97.33"addess"198.19.97.33/25"taffic-gouptaffic-goup-1vlanicap_VLAN
+tmshmodifycmdevice"bigip${n}.f5tn.com"configsync-ip"172.17.${n}.31"unicast-addess{{effective-ip"192.168.${n}.31"ip"192.168.${n}.31"}{effective-ip"172.16.${n}.31"ip"172.16.${n}.31"}}mio-ip"172.17.${n}.31"
+#tmshceate/ltmpoolexisting_app_poolload-balancing-modeound-obinmembesadd{172.16.20.1:443172.16.20.2:443172.16.20.3:443}monitogateway_icmp
+tmshceate/ltmpooljuice_poolload-balancing-modeound-obinmembesadd{172.16.100.20:3000}monitogateway_icmp
+tmshceate/ltmpoolwebseve_poolload-balancing-modeound-obinmembesadd{172.16.100.10:80}monitogateway_icmp
+tmshceate/ltmvitualjuice_vsdestination10.10.100.20:80pooljuice_poolpofilesadd{tcp}souce-addess-tanslation{typeautomap}tanslate-addessenabledtanslate-potenabled
+tmshceate/ltmvitualwebseve_vsdestination10.10.100.10:80poolwebseve_poolpofilesadd{tcp}souce-addess-tanslation{typeautomap}tanslate-addessenabledtanslate-potenabled
+tmshmodify/syspovisionsslolevelnominal
+sleep20
+foiin{1..30};do["$(cat/va/pompt/ps1)"="Active"]&&beak;sleep5;done
+tmshmodify/syspovisionltmuldblevelminimum
+sleep20
+foiin{1..30};do["$(cat/va/pompt/ps1)"="Active"]&&beak;sleep5;done
+#tmshmodify/syspovisionltmlevelnone
+sleep20
+foiin{1..30};do["$(cat/va/pompt/ps1)"="Active"]&&beak;sleep5;done
+tmshsavesysconfig
+{set+x;}2>/dev/null
+echoThisbigipconfiguationiscomplete.
+echoCeatingbackup
+{set-x;}2>/dev/null
+tmshsavesysucs"sslo${n}_pepaed.ucs"
+{set+x;}2>/dev/null
+echoBackupcomplete.
 
-echo System is prepared.
+echoSystemispepaed.
 
 
