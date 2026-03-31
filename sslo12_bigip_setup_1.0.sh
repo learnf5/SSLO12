@@ -1,11 +1,13 @@
 #!/bin/bash
 # Version 1.0 | 09/19/2024 | F5 Global Training Services
 #
+# BIG-IP ver 17.5 SSLO ver 12
+#
 # This script automates common Setup Utility tasks for 2 BIG-IP systems to be prepared as SSLO1 and SSLO2.
 # The script uses the third octet of the management IP address to populate the following configuration objects:
 # Self-IP addresses: 10.10.X.31, 10.10.X.33, 172.16.X.31, 172.16.X.33
 # root and admin user account passwords: setting both to f5trn00X or f5trn0XX (dependant upon station number)
-# root and admin passwords will not be in compliance with 8 charater requirement set in BIG-IP v17.1 - SSLO v11.0
+# root and admin passwords will not be in compliance with 8 charater requirement set in BIG-IP v17.5 - SSLO v12.x
 # New host name: ssloX.f5trn.com
 # UCS file: ssloX_prepared.ucs
 # Enable option to create instructor admin role on line 105 if needed. (Helpful in classes where hardware is used.)
@@ -83,8 +85,8 @@ echo Building Config
 tmsh modify sys global-settings gui-setup disabled
 tmsh modify sys global-settings mgmt-dhcp disabled
 tmsh modify sys global-settings hostname "sslo${n}.f5trn.com"
-tmsh modify sys ntp servers replace-all-with { 172.16.20.1 }
-tmsh modify sys dns name-servers replace-all-with { 172.16.20.1 }
+tmsh modify sys ntp servers replace-all-with { pool.ntp.org }
+tmsh modify sys dns name-servers replace-all-with { 8.8.8.8 }
 tmsh mv cm device "sslo${n}" "sslo${n}.f5trn.com"
 station=${n}
 if [ $n -lt 10 ]; then
@@ -106,20 +108,29 @@ EOD
 # [not correct] tmsh create net route external_default_gateway network default gw 10.10.17.33
 tmsh create net vlan internal interfaces add { 1.2 { untagged } }
 tmsh create net vlan external interfaces add { 1.1 { untagged } }
-tmsh create net vlan icap_VLAN interfaces add { 1.3 { untagged } }
+tmsh create net vlan icap_VLAN interfaces add { 1.3 { tagged } } tag 50 
+tmsh create net vlan HA interfaces add { 1.7 { untagged } }
 tmsh create net self "172.16.${n}.31" address "172.16.${n}.31/16" traffic-group traffic-group-local-only vlan internal allow-service default
 tmsh create net self "172.16.${n}.33" address "172.16.${n}.33/16" traffic-group traffic-group-1 vlan internal allow-service default
 tmsh create net self "10.10.${n}.31" address "10.10.${n}.31/16" traffic-group traffic-group-local-only vlan external
 tmsh create net self "10.10.${n}.33" address "10.10.${n}.33/16" traffic-group traffic-group-1 vlan external
-tmsh create net self "10.1.30.3${n}" address "10.1.30.3${n}/24" traffic-group traffic-group-local-only vlan icap_VLAN
-tmsh create net self "10.1.30.33" address "10.1.30.33/24" traffic-group traffic-group-1 vlan icap_VLAN
-tmsh modify cm device "bigip${n}.f5trn.com" configsync-ip "172.16.${n}.31" unicast-address {{ effective-ip "192.168.${n}.31" ip "192.168.${n}.31" } { effective-ip "172.16.${n}.31" ip "172.16.${n}.31" }} mirror-ip "172.16.${n}.31"
-tmsh create /ltm pool existing_app_pool load-balancing-mode round-robin members add { 172.16.20.1:443 172.16.20.2:443 172.16.20.3:443 } monitor gateway_icmp
-tmsh create /ltm virtual existing_app_pool destination 10.10.1.100:443 pool existing_app_pool profiles add { tcp } source-address-translation { type automap } translate-address enabled translate-port enabled
+tmsh create net self "172.17.${n}.31" address "172.17.${n}.31/16" traffic-group traffic-group-local-only vlan HA
+tmsh create net self "172.17.${n}.33" address "172.17.${n}.33/16" traffic-group traffic-group-1 vlan HA
+tmsh create net self "198.19.97.${n+6}" address "198.19.97.${n+6}/25" traffic-group traffic-group-local-only vlan icap_VLAN
+tmsh create net self "198.19.97.33" address "198.19.97.33/25" traffic-group traffic-group-1 vlan icap_VLAN
+tmsh modify cm device "bigip${n}.f5trn.com" configsync-ip "172.17.${n}.31" unicast-address {{ effective-ip "192.168.${n}.31" ip "192.168.${n}.31" } { effective-ip "172.16.${n}.31" ip "172.16.${n}.31" }} mirror-ip "172.17.${n}.31"
+# tmsh create /ltm pool existing_app_pool load-balancing-mode round-robin members add { 172.16.20.1:443 172.16.20.2:443 172.16.20.3:443 } monitor gateway_icmp
+tmsh create /ltm pool juice_pool load-balancing-mode round-robin members add { 172.16.100.20:3000 } monitor gateway_icmp
+tmsh create /ltm pool webserver_pool load-balancing-mode round-robin members add { 172.16.100.10:80 } monitor gateway_icmp
+tmsh create /ltm virtual juice_vs destination 10.10.100.20:80 pool juice_pool profiles add { tcp } source-address-translation { type automap } translate-address enabled translate-port enabled
+tmsh create /ltm virtual webserver_vs destination 10.10.100.10:80 pool webserver_pool profiles add { tcp } source-address-translation { type automap } translate-address enabled translate-port enabled
+tmsh modify /sys provision sslo level dedicated
+sleep 20
+for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
 tmsh modify /sys provision sslo urldb level minimum
 sleep 20
 for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
-tmsh modify /sys provision ltm level none
+# tmsh modify /sys provision ltm level none
 sleep 20
 for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
 tmsh save sys config
