@@ -54,20 +54,6 @@ if [ ${n} -lt 1 -o ${n} -gt 16 ]; then
   exit 1
 fi
 
-# do not modify the instructor LTM (station 17)
-if [ ${n} -eq 17 ]; then
-  echo Cannot use this script on the instructor LTM
-  exit 1
-fi
-#[ ${n} -eq 17 ] && exit 1
-
-#original hostname check
-#grep -qe 'hostname bigip1$' /config/bigip_base.conf
-#if [ $? -ne 0 ]; then
-#echo This bigip has a config!
-#exit 1
-#fi
-
 # Does the BIGIP have an existing network configuration?
  grep -q 'vlan /Common/.*' /config/bigip_base.conf
 if [ $? -eq 0 ]; then
@@ -127,6 +113,9 @@ tmsh create /ltm pool juice_pool load-balancing-mode round-robin members add { 1
 tmsh create /ltm pool webserver_pool load-balancing-mode round-robin members add { 172.16.100.10:80 } monitor gateway_icmp
 tmsh create /ltm virtual juice_vs destination 10.10.100.20:80 pool juice_pool profiles add { tcp } source-address-translation { type automap } translate-address enabled translate-port enabled
 tmsh create /ltm virtual webserver_vs destination 10.10.100.10:80 pool webserver_pool profiles add { tcp } source-address-translation { type automap } translate-address enabled translate-port enabled
+tmsh modify /sys db provision.extramb value 500
+sleep 20
+for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
 tmsh modify /sys provision sslo level nominal
 sleep 20
 for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
@@ -134,8 +123,8 @@ tmsh modify /sys provision ltm urldb level minimum
 sleep 20
 for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
 # tmsh modify /sys provision ltm level none
-sleep 20
-for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
+#sleep 20
+#for i in {1..30}; do [ "$(cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
 tmsh save sys config
 { set +x; } 2>/dev/null
 echo This bigip configuration is complete.
