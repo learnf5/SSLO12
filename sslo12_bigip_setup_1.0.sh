@@ -46,7 +46,8 @@ n=`ifconfig mgmt | awk -F"." '/inet/ { print $3 }'`
 echo "Student workstation number >>> $n <<< detected"
 
 # Calculate the 4th octet for the icap non-floating IP address
-o=$n+6
+add=6
+o=$((n+add))
 
 # Workstation number must be in the range 1-16
 if [ ${n} -lt 1 -o ${n} -gt 16 ]; then
