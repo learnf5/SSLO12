@@ -47,4 +47,4 @@ sudo netplan apply
 sleep 2
 
 # confirm networking is up
-until ping -c 1 ntp.org; do sleep 1; done
+until ping -c 1 172.16.1.33; do sleep 1; done
