@@ -3,7 +3,7 @@ curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/sslo1_5_
 sudo scp /tmp/sslo1_5_services.ucs 192.168.1.31:/var/local/ucs
 
 # confirm bigip1 is active
-for i in {1..12}; do [ "$(sudo ssh root@192.168.1.31 cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
+#for i in {1..12}; do [ "$(sudo ssh root@192.168.1.31 cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
 
 # Backup the existing configuration
 cp /etc/netplan/01-config.yaml /etc/netplan/01-config.yaml.bak
@@ -17,23 +17,20 @@ network:
     ens160:
       dhcp4: false
       addresses:
-      - 10.10.1.30/16
-      - 10.10.1.251/16
-      - 10.10.1.252/16
-      - 10.10.1.253/16
-    ens192:
-      dhcp4: false
-      addresses:
-      - 192.168.1.30/16
+      - 172.16.1.30/16
       routes:
       - to: default
-        via: 192.168.0.254
+        via: 172.16.1.33/16
       nameservers:
         addresses:
         - 8.8.8.8
         - 8.8.4.4
         search:
         - f5trn.com
+    ens192:
+      dhcp4: false
+      addresses:
+      - 192.168.1.30/16
     ens32:
       dhcp4: true
       nameservers:
