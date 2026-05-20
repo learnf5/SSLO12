@@ -9,7 +9,7 @@ for i in {1..12}; do [ "$(sudo ssh root@192.168.1.31 cat /var/prompt/ps1)" = "Ac
 cp /etc/netplan/01-config.yaml /etc/netplan/01-config.yaml.bak
 
 # Replace the contents with new configuration (update below as needed
-cat < /etc/netplan/01-config.yaml
+cat <<EOF | sudo tee /etc/netplan/01-config.yaml
 network:
   version: 2
   renderer: NetworkManager
