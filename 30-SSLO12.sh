@@ -1,11 +1,11 @@
 # copy ca-cert files to internal client
-mkdir /Downloads/certs
-curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/RootCertAndKey.pfx --output /Downloads/certs/RootCertAndKey.pfx
-curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca-f5trn-com.crt --output /Downloads/certs/ca-f5trn-com.crt
-curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca-f5trn-com.key --output /Downloads/certs/ca-f5trn-com.key
+mkdir /home/student/Downloads/certs
+curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/RootCertAndKey.pfx --output Downloads/certs/RootCertAndKey.pfx
+curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca-f5trn-com.crt --output Downloads/certs/ca-f5trn-com.crt
+curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca-f5trn-com.key --output Downloads/certs/ca-f5trn-com.key
 
 #install ca-cert on Internal Client
-sudo cp /home/student/Downloads/certs/ca-f5trn-com.crt /usr/local/shared/ca-certificates/
+sudo cp Downloads/certs/ca-f5trn-com.crt /usr/local/shared/ca-certificates
 sudo update-ca-certificates
 
 # Backup the existing configuration
