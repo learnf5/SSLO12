@@ -1,12 +1,23 @@
+
+# confirm bigip1 is active
+for i in {1..12}; do [ "$(sudo ssh root@192.168.1.31 cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
+
 # copy archive files from GitHub to bigip1
 curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/sslo1_5_services.ucs --output /tmp/sslo1_5_services.ucs
 sudo scp /tmp/sslo1_5_services.ucs 192.168.1.31:/var/local/ucs
 
-# confirm bigip1 is active
-#for i in {1..12}; do [ "$(sudo ssh root@192.168.1.31 cat /var/prompt/ps1)" = "Active" ] && break; sleep 5; done
+# copy ca-cert files to internal client
+mkdir /Downloads/certs
+curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/RootCertAndKey.pfx --output /Downloads/certs/RootCertAndKey.pfx
+curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca-f5trn-com.crt --output /Downloads/certs/ca-f5trn-com.crt
+curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca-f5trn-com.key --output /Downloads/certs/ca-f5trn-com.key
+
+#install ca-cert on Internal Client
+sudo cp /home/student/Downloads/certs/ca-f5trn-com.crt /usr/local/shared/ca-certificates/
+sudo update-ca-certificates
 
 # Backup the existing configuration
-cp /etc/netplan/01-config.yaml /etc/netplan/01-config.yaml.bak
+sudo cp /etc/netplan/01-config.yaml /etc/netplan/01-config.yaml.bak
 
 # Replace the contents with new configuration (update below as needed
 cat <<EOF | sudo tee /etc/netplan/01-config.yaml
