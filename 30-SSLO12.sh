@@ -8,6 +8,14 @@ curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca
 sudo cp Downloads/certs/ca-f5trn-com.crt /usr/local/share/ca-certificates
 sudo update-ca-certificates
 
+#install certutil libnss3-tools
+sudo apt update && sudo apt install libnss3-tools -y
+
+#install ca-cert into browsers
+certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "ca-f5trn-com" -i Downloads/certs/ca-f5trn-com.crt
+export FF_PROFILE=$(ls -d ~/snap/firefox/common/.mozilla/firefox/*.default)
+certutil -A -n "ca-f5trn-com" -t "TC,," -i Downloads/certs/ca-f5trn-com.crt -d sql:$FF_PROFILE
+
 # Backup the existing configuration
 sudo cp /etc/netplan/01-config.yaml /etc/netplan/01-config.yaml.bak
 
