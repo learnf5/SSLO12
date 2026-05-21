@@ -13,8 +13,12 @@ sudo apt update && sudo apt install libnss3-tools -y
 
 #install ca-cert into browsers
 certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "ca-f5trn-com" -i Downloads/certs/ca-f5trn-com.crt
-export FF_PROFILE=$(ls -d ~/snap/firefox/common/.mozilla/firefox/*.default)
-certutil -A -n "ca-f5trn-com" -t "TC,," -i Downloads/certs/ca-f5trn-com.crt -d sql:$FF_PROFILE
+#export FF_PROFILE=$(ls -d ~/snap/firefox/common/.mozilla/firefox/*.default)
+#certutil -A -n "ca-f5trn-com" -t "TC,," -i Downloads/certs/ca-f5trn-com.crt -d sql:$FF_PROFILE
+
+#This instructs Firefox to trust certificates located in the Ubuntu System Trust Store
+sudo mkdir -p /etc/firefox/policies
+echo '{"policies": {"ImportEnterpriseRoots": true}}' | sudo tee /etc/firefox/policies/policies.json
 
 # Backup the existing configuration
 sudo cp /etc/netplan/01-config.yaml /etc/netplan/01-config.yaml.bak
