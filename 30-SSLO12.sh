@@ -5,7 +5,7 @@ curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca
 curl --silent https://raw.githubusercontent.com/learnf5/$COURSE_ID/main/certs/ca-f5trn-com.key --output Downloads/certs/ca-f5trn-com.key
 
 #install ca-cert on Internal Client
-sudo cp Downloads/certs/ca-f5trn-com.crt /usr/local/shared/ca-certificates
+sudo cp Downloads/certs/ca-f5trn-com.crt /usr/local/share/ca-certificates
 sudo update-ca-certificates
 
 # Backup the existing configuration
